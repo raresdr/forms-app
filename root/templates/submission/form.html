@@ -1,0 +1,45 @@
+<%once>
+    use HTML::FillInForm;
+</%once>
+<%args>
+    $form => undef
+    $view => undef
+    $answers => undef
+</%args>
+
+<div class="row">
+    <div class="col-sm-3"> </div>
+    <div class="col-sm-6">
+        <form id="submission_form" name="submission_form" method="POST" action="<% $c->uri_for('/submission/process') %>">
+            <input type="hidden" id="form_id" name="form_id" value="<% $form->id %>">
+            <div class="form-group">
+                <h2> <% $form->title %> </h2>
+            </div>
+            <div class="form-group">
+                <h5> <% $form->description %> </h5>
+            </div>
+%           foreach my $field ( $form->form_fields ) {
+%               my $render_elem = sprintf('elements/%s.html', $field->field_type->type);
+                <& $render_elem, field => $field &>
+%           }
+%           unless ( $view ) {
+                <button type="submit" class="btn btn-primary">Submit</button>
+%           }
+        </form>
+    </div>
+</div>
+
+%   if ( $view ) {
+        <script>
+            //disabling all input elements in view mode
+            $('#submission_form').find('input, select').attr('disabled','disabled');
+        </script>
+%   }
+
+<%filter>
+    # populate entire form with retrieved data
+    if ( $view && $answers && scalar keys %$answers ) {
+        my $html = HTML::FillInForm->new->fill( scalarref => \$_, fdat => $answers, target => "submission_form");
+        return $html;
+    }
+</%filter>

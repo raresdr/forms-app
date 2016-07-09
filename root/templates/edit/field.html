@@ -1,0 +1,40 @@
+<%args>
+    $field
+</%args>
+
+<div class="row">
+    <div class="col-sm-2">
+    </div>
+    <div class="col-sm-8">
+        <form id="elem_form" class="form-horizontal field-custom-form" role="form">
+            <input type="hidden" id="elem_id" name="elem_id" value="<% $field->id %>">
+            <div class="form-group">
+              <label class="control-label col-sm-2 required" for="question">Question:</label>
+              <div class="col-sm-9">
+                    <div class="input-group">
+                        <input type="text" class="form-control question" id="question" name="question" value="<% $field->question %>" placeholder="Enter question"  maxlength="255">
+                        <span class="input-group-btn">
+                            <button class="btn btn-remove field-remove" type="button">-</button>
+                        </span>
+                    </div>
+              </div>
+            </div>
+%           foreach my $option ( $field->field_options ) {
+                <div class="form-group option">
+                  <label class="control-label col-sm-2 required" for="option"></label>
+                  <div class="col-sm-9">
+                        <div class="input-group">
+                            <span class="input-group-btn">
+                                <button class="btn btn-add" type="button">+</button>
+                            </span>
+                            <input type="text" class="form-control option" id="option_<% $option->id %>" name="option" value="<% $option->description %>" placeholder="Enter option"  maxlength="255">
+                            <span class="input-group-btn">
+                                <button class="btn btn-remove" type="button">-</button>
+                            </span>
+                        </div>
+                  </div>
+                </div>
+%           }
+        </form>
+    </div>
+</div>

@@ -1,0 +1,8 @@
+<%args>
+    $form => undef
+</%args>
+
+<& '../create.html', id => $form->id, edit => 1, title => $form->title, description => $form->description &>
+%   foreach my $field ( $form->form_fields ) {
+        <& 'field.html', field => $field &>
+%   }

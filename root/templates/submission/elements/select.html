@@ -1,0 +1,13 @@
+<%args>
+    $field
+</%args>
+
+<div class="form-group">
+    <label><% $field->question %></label>
+    <select name="<% $field->id %>" class="form-control">
+    <option value="">-----------</option>
+%       foreach my $option ( $field->field_options ) {
+            <option value="<% $option->id %>"><% $option->description %></option>
+%       }
+    </select>
+</div>

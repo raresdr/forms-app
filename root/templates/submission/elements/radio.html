@@ -1,0 +1,12 @@
+<%args>
+    $field
+</%args>
+
+<div class="form-group">
+    <label><% $field->question %></label>
+%       foreach my $option ( $field->field_options ) {
+            <div class="radio">
+                <label><input type="radio" name="<% $field->id %>" value="<% $option->id %>"><% $option->description %></label>
+            </div>
+%       }
+</div>

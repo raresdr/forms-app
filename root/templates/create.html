@@ -1,0 +1,60 @@
+<%args>
+  $error_msg => undef
+  $title => undef
+  $description => undef
+  $edit => undef
+  $id => undef
+</%args>
+
+<div class="row">
+  <div class="col-sm-2"> </div>
+  <div class="col-sm-10">
+    <span class="alert-warning span-alert desc-alert"><% $error_msg %></span>      
+  </div>
+</div>
+</br>
+
+<div class="row">
+  <div class="col-sm-2">
+    <div id="sidebar" class="fixed">
+      <ul class="nav nav-stacked" id="sidebar">
+        <li>
+          <button type="button" class="btn btn-menu btn-info" onclick="createFormElement(3);">Add Select Element</button>
+        </li>
+        <li>
+          <button type="button" class="btn btn-menu btn-info" onclick="createFormElement(1);">Add CheckBox Element</button>
+        </li>
+        <li>
+          <button type="button" class="btn btn-menu btn-info" onclick="createFormElement(2);">Add Radio Element</button>
+        </li>
+        <li>
+          <button type="button" class="btn btn-menu btn-info" onclick="removeFormCall()">Delete Form</button>
+        </li>
+      </ul>
+    </div>
+  </div>
+  <div class="col-sm-8">
+    <form id="desc_form" class="form-horizontal title-custom-form" role="form" method="POST" action="<% $c->uri_for('/create/post_base_form') %>">
+%     if ( $edit && $id ) {
+        <input type="hidden" id="id" name="id" value="<% $id %>">
+%     }
+      <div class="form-group">
+        <label class="control-label col-sm-2 required" for="title">Title:</label>
+        <div class="col-sm-9">
+          <input type="text" class="form-control" id="title" name="title" value="<% $title %>" placeholder="Enter title"  maxlength="255">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="control-label col-sm-2 required" for="description">Description:</label>
+        <div class="col-sm-9"> 
+          <textarea class="form-control" rows="3" id="description" name="description" placeholder="Enter description" maxlength="255"><% $description %></textarea>
+        </div>
+      </div>
+      <div class="form-group"> 
+        <div class="col-sm-offset-2 col-sm-10">
+          <button id="submit-form-button" type="submit" class="btn btn-default btn-info" <% $edit ? "onclick=\"submitForm(); return false;\"" : "" %>><% $edit ? 'Update' : 'Submit' %></button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>

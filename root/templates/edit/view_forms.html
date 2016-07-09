@@ -1,0 +1,34 @@
+<%args>
+    $forms
+</%args>
+
+<div class="row">
+    <div class="col-sm-2"> </div>
+    <div class="col-sm-8">
+        <div class="table-responsive table-div">
+            <table class="table table-striped table-responsive form-table">
+              <thead>
+                <tr>
+                  <th>Id</th>
+                  <th>Form name</th>
+                  <th>Form description</th>
+                  <th>Created date</th>
+                </tr>
+              </thead>
+              <tbody>
+%               foreach my $form ( @$forms ) {
+%                   my $created_date = $form->created =~ s/T/ - /r;
+%                   my $desc = ( length $form->description > 30 ) ? ( substr($form->description, 0, 30) . ' ...' ) : $form->description;
+                    <tr>
+                      <td><a href="<% $c->uri_for('/edit', $form->id) %>"><% $form->id %></a></td>
+                      <td><% $form->title %></td>
+                      <td><% $desc %></td>
+                      <td><% $created_date %></td>
+                    </tr>
+%               }
+              </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="col-sm-2"> </div>
+</div>
