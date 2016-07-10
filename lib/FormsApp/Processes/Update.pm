@@ -12,8 +12,7 @@ sub update_object {
     
     my $missing_search_args = grep { !$_ } values %{$args->{search_by}};
     my $missing_update_args = grep { !$_ } values %{$args->{update_with}};
-    warn $missing_search_args;
-    warn $missing_update_args;
+    
     # return error flag on search/update args missing
     if ( $missing_search_args || $missing_update_args ) {
         return { error => 1, message => $args->{message} || 'missing args' };

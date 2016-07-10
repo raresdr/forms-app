@@ -34,7 +34,6 @@ function updateTitleAJAX(url, data, call_type, data_type) {
 
 //function used for AJAX request - reusable
 function callAJAX(url, data, call_type, data_type, success_delegate) {
-    console.log('in callAJAX');
     $.ajax({
 		type: call_type,
 		url: url,
@@ -76,7 +75,6 @@ function createFormElement( type ) {
         { name: "form_id", value: $('#id').val() },
         { name: "type", value: type },
     ];
-    console.log('in createElement');
     callAJAX('/edit/create_element', $.param(query), 'POST', 'html', createElDeleg);
 }
 
@@ -119,7 +117,7 @@ function updateQuestion() {
 }
 
 //-----------------------------
-//add/remove options functions
+//add/remove options/fields functions
 function addOptionCall() {
     var currentForm = $(this).parents('form');
     

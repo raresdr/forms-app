@@ -16,6 +16,26 @@ sub retrieve_objects {
     return { objects => \@objects };
 }
 
+# special sub for retrieving an existent submission with its reponses
+# too specific to use a generic function
+sub retrieve_submission_object {
+    my ( $self, $args ) = @_;
+    
+    my $return_obj = $self->retrieve_objects($args);
+    
+    return { objects => [] }
+        unless ( $return_obj->{objects} && scalar @{$return_obj->{objects}} );
+    
+    my $submission_obj = $return_obj->{objects}->[0];
+    my $form = $submission_obj->form;
+    
+    my @answers = $self->schema->resultset('Answer')->search({ submission_id => $submission_obj->id });
+    my $answer_hash;
+    map { push @{$answer_hash->{$_->field_id}}, $_->option_id } @answers;
+    
+    return { objects => [ $form ], answers => $answer_hash };
+}
+
 __PACKAGE__->meta()->make_immutable();
 
 1;

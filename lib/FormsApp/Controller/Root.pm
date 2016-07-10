@@ -2,9 +2,6 @@ package FormsApp::Controller::Root;
 use Moose;
 use namespace::autoclean;
 
-use Data::Dumper;
-$Data::Dumper::Indent = 1;
-
 BEGIN { extends 'Catalyst::Controller' }
 
 #

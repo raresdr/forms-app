@@ -3,6 +3,7 @@ use Moose;
 use namespace::autoclean;
 
 use JSON;
+use FormsApp::ProcessFactory;
 
 BEGIN { extends 'Catalyst::Controller'; }
 
@@ -431,7 +432,7 @@ sub remove_option :Local :Args(0) {
                         id => $c->request->params->{option_id},
                     },
                     obj_type => 'FieldOption',
-                    message => 'Option id or field id missing'
+                    message => 'Option id missing'
                 }
             );
     };
