@@ -22,6 +22,7 @@ requires 'Catalyst::View::Mason';
 requires 'DBIx::Class::Schema::Loader';
 requires 'HTML::FillInForm';
 requires 'JSON';
+requires 'MooseX::AbstractFactory';
 
 requires 'Config::General'; # This should reflect the config file format you've chosen
                  # See Catalyst::Plugin::ConfigLoader for supported formats

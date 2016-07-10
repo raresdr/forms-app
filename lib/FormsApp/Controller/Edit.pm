@@ -32,19 +32,39 @@ sub begin :Private {
 
 =head2 index
 
+Displays form edit page for a specific form id.
+
+Input: form id - required
+
 =cut
 
 sub index :Path :Args(1) {
     my ( $self, $c, $id ) = @_;
     
-    my $form = $c->model('DB::Form')->find({ id => $id });
+    my $process;
     
-    unless ( $form ) {
-        warn 'no form';
-        # Redirect to /create in case form is inexistent
+    eval {
+        $process = FormsApp::ProcessFactory
+            ->create('read', { schema => $c->model('DB')->schema })
+            ->retrieve_objects(
+                {
+                    search_by => { id => $id },
+                    obj_type => 'Form'
+                }
+            );
+    };
+    
+    if ( $@ ) {
+        $c->log->error($@);
+        $c->res->redirect($c->uri_for('/error'));
+        return;
+    }
+    
+    # redirect to create page in case form is inexistent
+    unless ( $process->{objects} && scalar @{$process->{objects}} ) {
         $c->res->redirect($c->uri_for('/create',
             {
-                error_msg => "The accessed form does not exist",
+                error_msg => "The requested form does not exist",
             })
         );
         return;
@@ -52,206 +72,432 @@ sub index :Path :Args(1) {
     
     $c->stash(
         template => 'edit/edit.html',
-        form => $form
+        form => $process->{objects}->[0]
     );
 }
 
-=head2 list_forms
+=head2 view_forms
+
+Displays all existent forms.
 
 =cut
 
-sub list_forms :Path('/list_forms') :Args(0) {
+sub view_forms :Path('/view_forms') :Args(0) {
     my ( $self, $c ) = @_;
     
-    my @forms = $c->model('DB::Form')->search({}, {order_by => 'id DESC'});
+    my $process;
+    
+    eval {
+        $process = FormsApp::ProcessFactory
+            ->create('read', { schema => $c->model('DB')->schema })
+            ->retrieve_objects(
+                {
+                    opt_args => { order_by => 'id DESC' },
+                    obj_type => 'Form',
+                }
+            );
+    };
+    
+    if ( $@ ) {
+        $c->log->error($@);
+        $c->res->redirect($c->uri_for('/error'));
+        return;
+    }
     
     $c->stash(
         template => 'edit/view_forms.html',
-        forms => \@forms
+        forms => $process->{objects}
     );
 }
 
-=head2 index
+=head2 update_title
+
+Updates form's title and description.
+
+Input:  title - required
+        description - required
+
+Used with AJAX.
 
 =cut
 
 sub update_title :Local :Args(0) {
     my ( $self, $c ) = @_;
     
-    use Data::Dumper;
-    $Data::Dumper::Indent = 1;
+    my $process;
     
-    my $id = $c->request->params->{id};
-    my $title = $c->request->params->{title};
-    my $description = $c->request->params->{description};
-    warn"$title|$description|";
-    warn Dumper($c->request->params);
-    unless ( $id && $title && $description ) {
-        $c->res->body(to_json({
-            error => 1, message => 'Required fields missing'
-        }));
+    eval {
+        $process = FormsApp::ProcessFactory
+            ->create('update', { schema => $c->model('DB')->schema })
+            ->update_object(
+                {
+                    search_by => { id => $c->request->params->{id} },
+                    update_with => {
+                        title => $c->request->params->{title},
+                        description => $c->request->params->{description}
+                    },
+                    obj_type => 'Form',
+                    message => 'Required fields missing'
+                }
+            );
+    };
+    
+    if ( $@ ) {
+        $c->log->error($@);
+        $c->res->status(500);
+        $c->res->body(to_json({ redirect => 'to error page - TO DO' }));
         return;
     }
     
-    warn 'still in process_desc';
-    my $form_rs = $c->model('DB::Form')->search({ id => $id });
-    $form_rs->update({
-        title => $title,
-        description => $description
-    });
-    
-    $c->res->body(to_json({
-        success => 1,
-        message => "Form with id $id updated"
-    }));
+    # since it's AJAX call set error status
+    $c->res->status(400)
+        if ( $process->{error} );
+    $c->res->body(to_json($process));
 }
+
+=head2 update_option
+
+Updates form field option.
+
+Used with AJAX.
+
+Input:  option id - required
+        description - required
+
+=cut
+
+sub update_option :Local :Args(0) {
+    my ( $self, $c ) = @_;
+    
+    my $process;
+    
+    eval {
+        $process = FormsApp::ProcessFactory
+            ->create('update', { schema => $c->model('DB')->schema })
+            ->update_object(
+                {
+                    search_by => { id => $c->request->params->{id} },
+                    update_with => {
+                        description => $c->request->params->{value}
+                    },
+                    obj_type => 'FieldOption',
+                    message => 'Option id or description missing'
+                }
+            );
+    };
+    
+    if ( $@ ) {
+        $c->log->error($@);
+        $c->res->status(500);
+        $c->res->body(to_json({ redirect => 'to error page - TO DO' }));
+        return;
+    }
+    
+    # since it's AJAX call set error status
+    $c->res->status(400)
+        if ( $process->{error} );
+    $c->res->body(to_json($process));
+}
+
+=head2 update_question
+
+Updates form field question.
+
+Used with AJAX.
+
+Input:  field id - required
+        description - required
+
+=cut
+
+sub update_question :Local :Args(0) {
+    my ( $self, $c ) = @_;
+    
+    my $process;
+    
+    eval {
+        $process = FormsApp::ProcessFactory
+            ->create('update', { schema => $c->model('DB')->schema })
+            ->update_object(
+                {
+                    search_by => { id => $c->request->params->{id} },
+                    update_with => {
+                        question => $c->request->params->{value}
+                    },
+                    obj_type => 'FormField',
+                    message => 'Field id or question missing'
+                }
+            );
+    };
+    
+    if ( $@ ) {
+        $c->log->error($@);
+        $c->res->status(500);
+        $c->res->body(to_json({ redirect => 'to error page - TO DO' }));
+        return;
+    }
+    
+    # since it's AJAX call set error status
+    $c->res->status(400)
+        if ( $process->{error} );
+    $c->res->body(to_json($process));
+}
+
+=head2 create_element
+
+Creates form element.
+
+Used with AJAX.
+
+Input:  form id - required
+        description - required
+        field type - required
+
+=cut
 
 sub create_element :Local :Args(0) {
     my ( $self, $c ) = @_;
     
-    my $form_id = $c->request->params->{form_id};
-    my $type = $c->request->params->{type};
+    my $field_process;
+    my $option_process;
     
-    unless ( $type && $form_id ) {
-        warn 'no type or form id';
-        $c->res->body( 'error - no type or form_id specified');
+    eval {
+        # first create the field
+        $field_process = FormsApp::ProcessFactory
+            ->create('create', { schema => $c->model('DB')->schema })
+            ->create_object(
+                {
+                    create_with => {
+                        form_id => $c->request->params->{form_id},
+                        field_type_id => $c->request->params->{type},
+                        question => 'Question'
+                    },
+                    obj_type => 'FormField',
+                    message => 'Field type or form id missing'
+                }
+            );
+        # if field created successfully, create an option for it
+        if ( $field_process->{success} ) {
+            $option_process = FormsApp::ProcessFactory
+                ->create('create', { schema => $c->model('DB')->schema })
+                ->create_object(
+                    {
+                        create_with => {
+                            field_id => $field_process->{object}->id,
+                            description => 'Option'
+                        },
+                        obj_type => 'FieldOption',
+                        message => 'Field id or description missing'
+                    }
+                );
+        }
+    };
+    
+    if ( $@ ) {
+        $c->log->error($@);
+        $c->res->status(500);
+        $c->res->body(to_json({ redirect => 'to error page - TO DO' }));
         return;
     }
     
-    # Create field
-    my $field = $c->model('DB::FormField')->create({
-        form_id => $form_id,
-        field_type_id => $type,
-        question => 'Question'
-    });
-    
-    my $option = $field->add_to_field_options({ description => 'Option' });
+    # since it's AJAX call set error status
+    if ( $field_process->{error} || $option_process->{error} ) {
+        $c->res->status(400);
+        $c->res->body(to_json({
+            field_error => $field_process->{error},
+            option_error => $option_process->{error}
+        }));
+        return;
+    }
     
     $c->stash(
         template => 'edit/field.html',
-        field => $field
+        field => $field_process->{object}
     );
 }
 
+=head2 add_option
+
+Creates form field option.
+
+Used with AJAX.
+
+Input:  field id - required
+        description - required
+
+=cut
+
 sub add_option :Local :Args(0) {
     my ( $self, $c ) = @_;
-    use Data::Dumper;
-    $Data::Dumper::Indent = 1;
-    #warn Dumper($c->request->params);
-    my $field_id = $c->request->params->{field_id};
     
-    unless ( $field_id ) {
-        $c->res->body( 'error - no field_id specified');
+    my $process;
+    
+    eval {
+        $process = FormsApp::ProcessFactory
+            ->create('create', { schema => $c->model('DB')->schema })
+            ->create_object(
+                {
+                    create_with => {
+                        field_id => $c->request->params->{field_id},
+                        description => 'Option'
+                    },
+                    obj_type => 'FieldOption',
+                    message => 'Field id or description missing'
+                }
+            );
+    };
+    
+    if ( $@ ) {
+        $c->log->error($@);
+        $c->res->status(500);
+        $c->res->body(to_json({ redirect => 'to error page - TO DO' }));
         return;
     }
     
-    # Create option
-    my $option = $c->model('DB::FieldOption')->create({
-        field_id => $field_id,
-        description => 'Option'
-    });
+    # add extra params expected from AJAX response
+    if ( $process->{success} ) {
+        $process->{field_id} = $c->request->params->{field_id};
+        $process->{option_id} = $process->{object}->id;
+    } else {
+        $c->res->status(400);
+    }
     
-    $c->res->body(to_json({
-        success => 1,
-        message => "Option created",
-        option_id => $option->id,
-        field_id => $field_id
-    }));
+    # in order to not encode objects
+    delete $process->{object};
+    $c->res->body(to_json($process));
 }
+
+=head2 remove_form
+
+Removes form by id.
+
+Used with AJAX.
+
+Input:  form id - required
+
+=cut
+
+sub remove_form :Path('/remove') :Args(0) {
+    my ( $self, $c ) = @_;
+    
+    my $process;
+    
+    eval {
+        $process = FormsApp::ProcessFactory
+            ->create('delete', { schema => $c->model('DB')->schema })
+            ->remove_object(
+                {
+                    delete_by => { id => $c->request->params->{id} },
+                    obj_type => 'Form',
+                    message => 'Form id missing'
+                }
+            );
+    };
+    
+    if ( $@ ) {
+        $c->log->error($@);
+        $c->res->status(500);
+        $c->res->body(to_json({ redirect => 'to error page - TO DO' }));
+        return;
+    }
+    
+    $c->res->status(400)
+        if ( $process->{error} );
+    
+    $c->res->body(to_json($process));
+}
+
+=head2 remove_option
+
+Removes option by id.
+
+Used with AJAX.
+
+Input:  option id - required
+
+=cut
 
 sub remove_option :Local :Args(0) {
     my ( $self, $c ) = @_;
-    use Data::Dumper;
-    $Data::Dumper::Indent = 1;
-    #warn Dumper($c->request->params);
-    my $option_id = $c->request->params->{option_id};
-    my $field_id = $c->request->params->{field_id};
     
-    unless ( $option_id && $field_id ) {
-        $c->res->body( 'error - no option_id or field_id specified');
+    my $process;
+    
+    eval {
+        $process = FormsApp::ProcessFactory
+            ->create('delete', { schema => $c->model('DB')->schema })
+            ->remove_object(
+                {
+                    delete_by => {
+                        id => $c->request->params->{option_id},
+                    },
+                    obj_type => 'FieldOption',
+                    message => 'Option id or field id missing'
+                }
+            );
+    };
+    
+    if ( $@ ) {
+        $c->log->error($@);
+        $c->res->status(500);
+        $c->res->body(to_json({ redirect => 'to error page - TO DO' }));
         return;
     }
     
-    # Remove option
-    my $option = $c->model('DB::FieldOption')->find({ id => $option_id });
-    $option->delete;
+    # add extra params expected from AJAX response
+    if ( $process->{success} ) {
+        $process->{field_id} = $c->request->params->{field_id};
+        $process->{option_id} = $c->request->params->{option_id};
+    } else {
+        $c->res->status(400);
+    }
     
-    $c->res->body(to_json({
-        success => 1,
-        message => "Option deleted",
-        option_id => $option_id,
-        field_id => $field_id
-    }));
+    $c->res->body(to_json($process));
 }
+
+=head2 remove_field
+
+Removes field by id.
+
+Used with AJAX.
+
+Input:  field id - required
+
+=cut
 
 sub remove_field :Local :Args(0) {
     my ( $self, $c ) = @_;
-    use Data::Dumper;
-    $Data::Dumper::Indent = 1;
-    #warn Dumper($c->request->params);
-    my $field_id = $c->request->params->{field_id};
     
-    unless ( $field_id ) {
-        $c->res->body( 'error - no field_id specified');
+    my $process;
+    
+    eval {
+        $process = FormsApp::ProcessFactory
+            ->create('delete', { schema => $c->model('DB')->schema })
+            ->remove_object(
+                {
+                    delete_by => {
+                        id => $c->request->params->{field_id},
+                    },
+                    obj_type => 'FormField',
+                    message => 'Field id missing'
+                }
+            );
+    };
+    
+    if ( $@ ) {
+        $c->log->error($@);
+        $c->res->status(500);
+        $c->res->body(to_json({ redirect => 'to error page - TO DO' }));
         return;
     }
     
-    # Create option
-    my $field = $c->model('DB::FormField')->find({ id => $field_id });
-    $field->delete;
-    
-    $c->res->body(to_json({
-        success => 1,
-        message => "Field deleted",
-        field_id => $field_id
-    }));
-}
-
-sub update_option :Local :Args(0) {
-    my ( $self, $c ) = @_;
-    use Data::Dumper;
-    $Data::Dumper::Indent = 1;
-    #warn Dumper($c->request->params);
-    my $id = $c->request->params->{id};
-    my $value = $c->request->params->{value};
-    
-    unless ( $id && $value ) {
-        $c->res->body( 'error - no option_id or description specified');
-        return;
+    # add extra params expected from AJAX response
+    if ( $process->{success} ) {
+        $process->{field_id} = $c->request->params->{field_id};
+    } else {
+        $c->res->status(400);
     }
     
-    # Update option
-    my $rs = $c->model('DB::FieldOption')->search({ id => $id });
-    $rs->update({ description => $value });
-    
-    $c->res->body(to_json({
-        success => 1,
-        message => "Option with id $id updated"
-    }));
-}
-
-sub update_question :Local :Args(0) {
-    my ( $self, $c ) = @_;
-    use Data::Dumper;
-    $Data::Dumper::Indent = 1;
-    warn Dumper($c->request->params);
-    my $id = $c->request->params->{id};
-    my $value = $c->request->params->{value};
-    
-    unless ( $id && $value ) {
-        warn 'no field_id or question';
-        $c->res->body( 'error - no field_id or question specified');
-        return;
-    }
-    
-    # Update option
-    my $rs = $c->model('DB::FormField')->search({ id => $id });
-    $rs->update({ question => $value });
-    
-    $c->res->body(to_json({
-        success => 1,
-        message => "Field with id $id updated"
-    }));
+    $c->res->body(to_json($process));
 }
 
 =encoding utf8

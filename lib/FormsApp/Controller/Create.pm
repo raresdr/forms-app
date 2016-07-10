@@ -2,6 +2,8 @@ package FormsApp::Controller::Create;
 use Moose;
 use namespace::autoclean;
 
+use FormsApp::ProcessFactory;
+
 BEGIN { extends 'Catalyst::Controller'; }
 
 =head1 NAME
@@ -30,6 +32,8 @@ sub begin :Private {
 
 =head2 index
 
+Action for form create page.
+
 =cut
 
 sub index :Path :Args(0) {
@@ -43,39 +47,56 @@ sub index :Path :Args(0) {
     );
 }
 
-=head2 create
+=head2 post_form
+
+Creates a basic form with title and description.
+Used as POST submit.
+
+Input:  title - required
+        description - required
 
 =cut
 
-sub post_base_form :Local {
+sub post_form :Local {
     my ( $self, $c ) = @_;
-
-    # Retrieve the values from the form
-    my $title = $c->request->params->{title};
-    my $description = $c->request->params->{description};
     
-    unless ( $title && $description ) {
-        # Redirect to the index action/method in this controller
-        $c->res->redirect($c->uri_for($self->action_for('index'),
-            {
-                error_msg => "Required fields missing",
-                title => $title,
-                description => $description
-            })
-        );
+    my $process;
+    
+    eval {
+        $process = FormsApp::ProcessFactory
+            ->create('create', { schema => $c->model('DB')->schema })
+            ->create_object(
+                {
+                    create_with => {
+                        title => $c->request->params->{title},
+                        description => $c->request->params->{description}
+                    },
+                    obj_type => 'Form',
+                    message => 'Required fields missing'
+                }
+            );
+    };
+    
+    if ( $@ ) {
+        $c->log->error($@);
+        $c->res->redirect($c->uri_for('/error'));
         return;
     }
     
-    # TO DO
-    # error handling
-    
-    # Create the form
-    my $form = $c->model('DB::Form')->create({
-        title   => $title,
-        description  => $description,
-    });
-    
-     $c->res->redirect($c->uri_for('/edit',($form->id)));
+    # Required fields are missing - redirect to create page with specific messages
+    if ( $process->{error} ) {
+        $c->res->redirect($c->uri_for($self->action_for('index'),
+            {
+                error_msg => $process->{message},
+                title => $c->request->params->{title},
+                description => $c->request->params->{description}
+            })
+        );
+        return;
+    } else {
+        # Processed successfully - redirect to edit page for this form
+        $c->res->redirect($c->uri_for('/edit',($process->{object}->id)));
+    }
 }
 
 =encoding utf8

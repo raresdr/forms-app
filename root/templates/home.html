@@ -31,14 +31,14 @@
 				<a href="<% $c->uri_for('/create') %>" class="btn btn-lg btn-primary">
 					<strong>Create</strong>
 				</a>
-                <a href="<% $c->uri_for('/list_forms') %>" class="btn btn-lg btn-primary">
-					<strong>&nbsp&nbspEdit&nbsp&nbsp</strong>
+                <a href="<% $c->uri_for('/view_forms') %>" class="btn btn-lg btn-primary">
+					<strong>Edit/Submit</strong>
 				</a>
 			</div>
             <br>
             <div align="center">
-                <a href="#" class="btn btn-lg btn-primary">
-					<strong>Complete</strong>
+                <a href="<% $c->uri_for('/view_submits') %>" class="btn btn-lg btn-primary">
+					<strong>View Submits</strong>
 				</a>
 			</div>
 		</div>

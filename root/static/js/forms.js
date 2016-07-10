@@ -66,7 +66,7 @@ function removeFormCall() {
 }
 
 function removeFormDeleg(data) {
-    window.location.href = "/list_forms";
+    window.location.href = "/view_forms";
 }
 
 //AJAX request for creating a form element
@@ -173,4 +173,10 @@ function removeFieldCall() {
 function removeFieldDeleg(data) {
 	var currentForm = $('input[name=elem_id][value=' + data.field_id + ']').parents('form');
     currentForm.remove();
+}
+
+//function for displaying the current form shareable link in an alert box
+function getLink( link ) {
+	var content = 'Shareable link for your form: ' + link;
+	alert(content);
 }

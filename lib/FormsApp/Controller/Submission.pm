@@ -16,6 +16,17 @@ Catalyst Controller.
 
 =cut
 
+=head2 begin
+
+Set page title for the current controller (/)
+
+=cut
+
+sub begin :Private {
+    my ( $self, $c ) = @_;
+    
+    $c->stash( page_title => 'Submit Form' );
+}
 
 =head2 index
 
@@ -84,7 +95,7 @@ sub process :Local :Args(0) {
     $c->res->redirect($c->uri_for('/'));
 }
 
-sub view :Path('view') :Args(1) {
+sub view :Local :Args(1) {
     my ( $self, $c, $id ) = @_;
     
     my $submission = $c->model('DB::Submission')->find({ id => $id });
@@ -114,6 +125,16 @@ sub view :Path('view') :Args(1) {
     );
 }
 
+sub view_submits :Path('/view_submits') :Args(0) {
+    my ( $self, $c ) = @_;
+    
+    my @submits = $c->model('DB::Submission')->search({}, {order_by => 'created DESC'});
+    
+    $c->stash(
+        template => 'submission/view_submits.html',
+        submits => \@submits
+    );
+}
 
 =encoding utf8
 

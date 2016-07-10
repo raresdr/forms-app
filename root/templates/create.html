@@ -6,6 +6,13 @@
   $id => undef
 </%args>
 
+<%init>
+  my $link = '';
+  
+  $link = $c->uri_for('/submission/complete', $id)
+    if ( $edit );
+</%init>
+
 <div class="row">
   <div class="col-sm-2"> </div>
   <div class="col-sm-10">
@@ -16,8 +23,12 @@
 
 <div class="row">
   <div class="col-sm-2">
+% if ( $edit ) {
     <div id="sidebar" class="fixed">
       <ul class="nav nav-stacked" id="sidebar">
+        <li>
+          <button type="button" class="btn btn-menu btn-info link-btn" onclick="getLink('<% $link %>');">Get Link</button>
+        </li>
         <li>
           <button type="button" class="btn btn-menu btn-info" onclick="createFormElement(3);">Add Select Element</button>
         </li>
@@ -32,9 +43,10 @@
         </li>
       </ul>
     </div>
+% }
   </div>
   <div class="col-sm-8">
-    <form id="desc_form" class="form-horizontal title-custom-form" role="form" method="POST" action="<% $c->uri_for('/create/post_base_form') %>">
+    <form id="desc_form" class="form-horizontal title-custom-form" role="form" method="POST" action="<% $c->uri_for('/create/post_form') %>">
 %     if ( $edit && $id ) {
         <input type="hidden" id="id" name="id" value="<% $id %>">
 %     }

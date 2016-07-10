@@ -49,6 +49,18 @@ sub index :Path :Args(0) {
     $c->stash(template => 'home.html');
 }
 
+=head2 error
+
+Custom error page
+
+=cut
+
+sub error :Local :Args(0) {
+    my ( $self, $c ) = @_;
+    
+    $c->stash(template => 'error.html');
+}
+
 =head2 default
 
 Standard 404 error page
